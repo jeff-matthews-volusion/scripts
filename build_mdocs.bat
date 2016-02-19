@@ -1,4 +1,15 @@
 @echo off
+
+set name=Jeff
+set flareLocation=C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
+set sourceLocation=C:\git\mdocs-flare-source\m-docs.flprj
+set outputLocation=C:\git\mdocs-flare-source\Output\jeff_matthews\"mozu docs"
+set apiSourceLocation=C:\git\mdocs-flare-api\API_Reference.flprj
+set apiOutputLocation=C:\git\mdocs-flare-api\Output\jeff_matthews\HTML5
+set authContentGitLocation=C:\git\Mozu.AuthContent
+set authContentLocation=C:\git\Mozu.AuthContent\Mozu.AuthContent
+set mdocsLocation=C:\mdocs
+
 echo        mmmmmmm    mmmmmmm      ooooooooooo   zzzzzzzzzzzzzzzzzuuuuuu    uuuuuu  
 echo      mm:::::::m  m:::::::mm  oo:::::::::::oo z:::::::::::::::zu::::u    u::::u  
 echo     m::::::::::mm::::::::::mo:::::::::::::::oz::::::::::::::z u::::u    u::::u  
@@ -16,7 +27,7 @@ echo     mmmmmm   mmmmmm   mmmmmm   ooooooooooo   zzzzzzzzzzzzzzzzz    uuuuuuuu 
 echo
 echo 1. Build and publish mDocs only.
 echo 2. Build and publish mDocs and API.
-echo 3. I'VE ALREADY BUILT MDOCS, JEFF!!! Publish to my local Mozu.AuthContent repo for deployment... geez.
+echo 3. I'VE ALREADY BUILT MDOCS, %name%!!! Publish to my local Mozu.AuthContent repo for deployment... geez.
 set /p choice=Enter 1, 2, or 3: 
 if '%choice%'=='1' goto 1. build_mdocs
 if '%choice%'=='2' goto 2. build_mdocs_api
@@ -28,43 +39,43 @@ goto start
 :1. build_mdocs
 echo Building and publishing mDocs only
 :: Changing to Flare application directory to run madbuild.exe
-cd C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
+cd %flareLocation%
 :: Building the m-docs Flare project
-madbuild -project C:\git\mdocs-flare-source\m-docs.flprj -target "mozu docs"
+madbuild -project %sourceLocation% -target "mozu docs"
 :: Deleting old files and directories from publish destination and recreating destination directory
 rd C:\mdocs\flare\ /s /q
 md C:\mdocs\flare\
 :: Publishing output (copies local output directory to publish destination)
 cd C:\mdocs\flare
-xcopy C:\git\mdocs-flare-source\output\jeff_matthews\"mozu docs"\* /y /r /h /e /i
+xcopy %outputLocation%\* /y /r /h /e /i
 :: Running gulp
-cd C:\git\mdocs
+cd %mdocsLocation%
 gulp
 
 :2. build_mdocs_api
 echo Building and publishing mDocs and API
 :: Changing to Flare application directory to run madbuild.exe
-cd C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
+cd %flareLocation%
 :: Building the m-docs Flare project
-madbuild -project C:\git\mdocs-flare-source\m-docs.flprj -target "mozu docs"
+madbuild -project %sourceLocation% -target "mozu docs"
 :: Deleting old files and directories from publish destination and recreating destination directory
 rd C:\mdocs\flare\ /s /q
 md C:\mdocs\flare\
 :: Publishing output (copies local output directory to publish destination)
 cd C:\mdocs\flare
-xcopy C:\git\mdocs-flare-source\output\jeff_matthews\"mozu docs"\* /y /r /h /e /i
+xcopy %outputLocation%\* /y /r /h /e /i
 :: Changing to Flare application directory to run madbuild.exe
-cd C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
+cd %flareLocation%
 :: Building the API Flare project
-madbuild -project C:\git\mdocs-flare-api\API_Reference.flprj -target HTML5
+madbuild -project %apiSourceLocation% -target HTML5
 :: Deleting old files and directories from publish destination and recreating destination directory
 rd C:\mdocs\api\ /s /q
 md C:\mdocs\api\
 :: Publishing output (copies local output directory to publish destination)
 cd C:\mdocs\api
-xcopy C:\git\mdocs-flare-api\output\jeff_matthews\HTML5\* /y /r /h /e /i
+xcopy %apiOutputLocation%\* /y /r /h /e /i
 :: Running gulp
-cd C:\git\mdocs
+cd %mdocsLocation%
 gulp
 
 
@@ -73,7 +84,7 @@ echo Publishing mdocs to Mozu.AuthContent repo for deployment
 
 :verify_branch
 echo Which branch do you want to deploy?
-cd C:\git\Mozu.AuthContent
+cd %authContentGitLocation%
 echo Here's a list of available git branches:
 git branch
 
@@ -81,14 +92,14 @@ git branch
 
 set /P _TMP=Type the name of the branch you want to deploy to and press Enter: 
 if '%_TMP%'=='' goto sub_error_verify
-cd C:\git\Mozu.AuthContent
+cd %authContentGitLocation%
 git checkout %_TMP%
 ::If git can't find the branch, the script stops
 IF %ERRORLEVEL% NEQ 0 (
     goto verify_branch
 )
-cd C:\git\mdocs
-gulp deploy
+cd %authContentLocation%
+xcopy C:\mdocs\publish\* /y /r /h /e /i
 goto end
 
 :sub_error_verify
@@ -96,5 +107,5 @@ echo Unable to switch to specified branch. Aborting.
 goto verify_branch
 
 :end
-pause
+echo AuthContent updated successfully.
 exit
