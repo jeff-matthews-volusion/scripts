@@ -14,19 +14,19 @@ echo     mmmmmm   mmmmmm   mmmmmm   ooooooooooo   zzzzzzzzzzzzzzzzz    uuuuuuuu 
 
 :start
 echo
-echo 1. Build and publish mDocs only
-echo 2. Build and publish mDocs and API
-::echo 3. DEBUG
-::set /p choice=Enter 1 or 2 or 3: 
-set /p choice=Enter 1 or 2: 
-if '%choice%'=='1' goto 1. Build and publish mDocs only
-if '%choice%'=='2' goto 2. Build and publish mDocs and API
-::if '%choice%'=='3' goto 3. DEBUG
-if '%choice%'=='' ECHO You must enter 1 or 2
+echo 1. Build and publish mDocs only.
+echo 2. Build and publish mDocs and API.
+echo 3. I'VE ALREADY BUILT MDOCS, JEFF!!! Publish to my local Mozu.AuthContent repo for deployment... geez.
+set /p choice=Enter 1, 2, or 3: 
+if '%choice%'=='1' goto 1. build_mdocs
+if '%choice%'=='2' goto 2. build_mdocs_api
+if '%choice%'=='3' goto 3. deploy
+if '%choice%'=='' ECHO You must enter 1, 2, or 3
 echo
 goto start
 
-:1. Build and publish mDocs only
+:1. build_mdocs
+echo Building and publishing mDocs only
 :: Changing to Flare application directory to run madbuild.exe
 cd C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
 :: Building the m-docs Flare project
@@ -40,9 +40,9 @@ xcopy C:\git\mdocs-flare-source\output\jeff_matthews\"mozu docs"\* /y /r /h /e /
 :: Running gulp
 cd C:\git\mdocs
 gulp
-goto deploy_mdocs
 
-:2. Build and publish both mDocs and API
+:2. build_mdocs_api
+echo Building and publishing mDocs and API
 :: Changing to Flare application directory to run madbuild.exe
 cd C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
 :: Building the m-docs Flare project
@@ -67,63 +67,33 @@ xcopy C:\git\mdocs-flare-api\output\jeff_matthews\HTML5\* /y /r /h /e /i
 cd C:\git\mdocs
 gulp
 
-goto deploy_mdocs
 
-::3. DEBUG
-::goto deploy_mdocs
-
-:deploy_mdocs
-echo Deploy mDocs?
-set /p choice=Enter Y or N: 
-if '%choice%'=='Y' goto verify_branch
-if '%choice%'=='N' goto N
-if '%choice%'=='' goto sub_error_deploy
-goto end
-
-:N
-exit 
+:3. deploy
+echo Publishing mdocs to Mozu.AuthContent repo for deployment
 
 :verify_branch
-echo Which branch?
+echo Which branch do you want to deploy?
 cd C:\git\Mozu.AuthContent
+echo Here's a list of available git branches:
 git branch
 
-:sub_error_deploy
-echo You must enterr N
-goto deploy_mdocs
+::Prompting user to specify a git branch and saving that input to the TMP system environment variable.
 
-::Prompting user to specify a git branch and saving that input to the TMP system environment variable. The following IF statements look at this variable for processing the next task.
 set /P _TMP=Type the name of the branch you want to deploy to and press Enter: 
 if '%_TMP%'=='' goto sub_error_verify
-if '%_TMP%'=='master' goto checkout_master
-if '%_TMP%'=='develop' goto checkout_develop
-if '%_TMP%'=='*' goto *
+cd C:\git\Mozu.AuthContent
+git checkout %_TMP%
+::If git can't find the branch, the script stops
+IF %ERRORLEVEL% NEQ 0 (
+    goto verify_branch
+)
+cd C:\git\mdocs
+gulp deploy
 goto end
 
 :sub_error_verify
-echo You must specify a branch
+echo Unable to switch to specified branch. Aborting.
 goto verify_branch
-
-:checkout_master
-cd C:\git\Mozu.AuthContent
-git checkout master
-cd C:\git\mdocs
-gulp deploy
-goto end
-
-:checkout_develop
-cd C:\git\Mozu.AuthContent
-git checkout develop
-cd C:\git\mdocs
-gulp deploy
-goto end
-
-:*
-cd C:\git\Mozu.AuthContent
-git checkout *
-cd C:\git\mdocs
-gulp deploy
-goto end
 
 :end
 pause
