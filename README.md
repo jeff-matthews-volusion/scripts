@@ -9,6 +9,7 @@ An interactive Windows CLI script that requires user input to execute properly. 
 
 ```sh
 > git clone git@github.com:jeff-matthews-volusion/scripts.git
+> Configure all directory paths to match your local directory structure. I'm working on making this less painful.
 > cd <cloned repo>
 > build_mdocs.bat
 ```
