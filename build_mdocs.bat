@@ -6,19 +6,6 @@ set CONFIGSET=NO
 
 set LOCALCONF=build_mdocs_config.bat
 
-if "%LOCALCONF%"=="" goto config_help  
-goto config_do
-
-
-:config_help
-echo This is a configuration help script
-echo Call from another script with first parameter being the config file name
-echo This script will set the variable CONFIGSET
-echo   CONFIGSET=NO  in the case of error or undefined configuration
-echo   CONFIGSET=YES in the case where configuration has been successfully read 
-goto config_exit
-
-
 :config_do
 IF EXIST %LOCALCONF% goto config_cont
 
@@ -37,7 +24,7 @@ echo set mdocsLocation=C:\mdocs>> %LOCALCONF%
 echo #
 echo # Local configuration not yet set.
 echo # A default configuration file (%LOCALCONF%) has been created.
-echo # Review and edit this file, then run this batch file again.
+echo # Update this file with the directory paths local to your machine, then run this batch file again.
 echo #
 goto config_exit
 
