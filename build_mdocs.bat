@@ -1,14 +1,77 @@
 @echo off
 
-set name=Jeff
-set flareLocation=C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app
-set sourceLocation=C:\git\mdocs-flare-source\m-docs.flprj
-set outputLocation=C:\git\mdocs-flare-source\Output\jeff_matthews\"mozu docs"
-set apiSourceLocation=C:\git\mdocs-flare-api\API_Reference.flprj
-set apiOutputLocation=C:\git\mdocs-flare-api\Output\jeff_matthews\HTML5
-set authContentGitLocation=C:\git\Mozu.AuthContent
-set authContentLocation=C:\git\Mozu.AuthContent\Mozu.AuthContent
-set mdocsLocation=C:\mdocs
+setlocal
+
+set CONFIGSET=NO
+
+set LOCALCONF=build_mdocs_config.bat
+
+if "%LOCALCONF%"=="" goto config_help  
+goto config_do
+
+
+:config_help
+echo This is a configuration help script
+echo Call from another script with first parameter being the config file name
+echo This script will set the variable CONFIGSET
+echo   CONFIGSET=NO  in the case of error or undefined configuration
+echo   CONFIGSET=YES in the case where configuration has been successfully read 
+goto config_exit
+
+
+:config_do
+IF EXIST %LOCALCONF% goto config_cont
+
+REM generate default setting file
+echo REM configuration file> %LOCALCONF%
+echo set name=Javier>> %LOCALCONF%
+echo set flareLocation=C:\Program Files (x86)\MadCap Software\MadCap Flare V11\Flare.app>> %LOCALCONF%
+echo set sourceLocation=C:\Users\javier_robalino\Documents\GitHub\mdocs-flare-source\m-docs.flprj>> %LOCALCONF%
+echo set outputLocation=C:\Users\javier_robalino\Documents\GitHub\mdocs-flare-source\Output\javier_robalino\"mozu docs">> %LOCALCONF%
+echo set apiSourceLocation=C:\Users\javier_robalino\Documents\GitHub\mdocs-flare-api\API_Reference.flprj>> %LOCALCONF%
+echo set apiOutputLocation=C:\Users\javier_robalino\Documents\GitHub\mdocs-flare-api\Output\javier_robalino\HTML5>> %LOCALCONF%
+echo set authContentGitLocation=C:\Users\javier_robalino\Documents\GitHub\Mozu.AuthContent>> %LOCALCONF%
+echo set authContentLocation=C:\Users\javier_robalino\Documents\GitHub\Mozu.AuthContent\Mozu.AuthContent>> %LOCALCONF%
+echo set mdocsLocation=C:\mdocs>> %LOCALCONF%
+
+echo #
+echo # Local configuration not yet set.
+echo # A default configuration file (%LOCALCONF%) has been created.
+echo # Review and edit this file, then run this batch file again.
+echo #
+goto config_exit
+
+
+:config_cont
+call %LOCALCONF%
+set CONFIGSET=YES
+
+
+:config_exit
+if "%CONFIGSET%"=="YES" goto config_ok
+echo Configuration is not set
+goto exit
+
+
+
+:exit
+endlocal
+exit
+
+:config_ok
+echo The following configuration is set:
+echo   name=%name%
+echo   flareLocation=%flareLocation%
+echo   sourceLocation=%sourceLocation%
+echo   outputLocation=%outputLocation%
+echo   apiSourceLocation=%apiSourceLocation%
+echo   apiOutputLocation=%apiOutputLocation%
+echo   authContentGitLocation=%authContentGitLocation%
+echo   authContentLocation=%authContentLocation%
+echo   mdocsLocation=%mdocsLocation%
+echo.
+echo.
+
 
 echo        mmmmmmm    mmmmmmm      ooooooooooo   zzzzzzzzzzzzzzzzzuuuuuu    uuuuuu  
 echo      mm:::::::m  m:::::::mm  oo:::::::::::oo z:::::::::::::::zu::::u    u::::u  
@@ -22,17 +85,26 @@ echo     m::::m   m::::m   m::::mo:::::ooooo:::::o  z::::::zzzzzzzzu::::::::::::
 echo     m::::m   m::::m   m::::mo:::::::::::::::o z::::::::::::::z u:::::::::::::::u
 echo     m::::m   m::::m   m::::m oo:::::::::::oo z:::::::::::::::z  uu::::::::uu:::u
 echo     mmmmmm   mmmmmm   mmmmmm   ooooooooooo   zzzzzzzzzzzzzzzzz    uuuuuuuu  uuuu
+echo.
+echo.
+echo     ****************************************************************************
+echo.
+echo.
 
 :start
-echo
+echo.
 echo 1. Build and publish mDocs only.
 echo 2. Build and publish mDocs and API.
-echo 3. I'VE ALREADY BUILT MDOCS, %name%!!! Publish to my local Mozu.AuthContent repo for deployment... geez.
-set /p choice=Enter 1, 2, or 3: 
+echo 3. Build and publish beta mDocs only.
+echo 4. I'VE ALREADY BUILT MDOCS, %name%!!! Publish to my local Mozu.AuthContent repo for deployment... geez.
+echo 5. Exit this witchcraft. I didn't sign up for this!
+set /p choice=Enter 1, 2, 3, 4, or 5: 
 if '%choice%'=='1' goto 1. build_mdocs
 if '%choice%'=='2' goto 2. build_mdocs_api
-if '%choice%'=='3' goto 3. deploy
-if '%choice%'=='' ECHO You must enter 1, 2, or 3
+if '%choice%'=='3' goto 3. build_mdocs_beta
+if '%choice%'=='4' goto 4. deploy
+if '%choice%'=='5' exit
+if '%choice%'=='' ECHO You must enter 1, 2, 3, or 4
 echo
 goto start
 
@@ -78,8 +150,24 @@ xcopy %apiOutputLocation%\* /y /r /h /e /i
 cd %mdocsLocation%
 gulp
 
+:3. build_mdocs_beta
+echo Building and publishing mDocs only
+:: Changing to Flare application directory to run madbuild.exe
+cd %flareLocation%
+:: Building the m-docs Flare project
+madbuild -project %sourceLocation% -target "mozu docs"
+:: Deleting old files and directories from publish destination and recreating destination directory
+rd C:\mdocs\flare\ /s /q
+md C:\mdocs\flare\
+:: Publishing output (copies local output directory to publish destination)
+cd C:\mdocs\flare
+xcopy %outputLocation%\* /y /r /h /e /i
+:: Running gulp
+cd %mdocsLocation%
+gulp beta
 
-:3. deploy
+
+:4. deploy
 echo Publishing mdocs to Mozu.AuthContent repo for deployment
 
 :verify_branch
